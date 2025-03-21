@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include "logevent.h"
 
 /*
 LogFormatter根据模板字符串来格式化日志事件，模板字符串中的格式符会被替换成对应的内容，格式符有：
@@ -27,7 +28,10 @@ public:
 
     LogFormatter(const std::string& pattern="%d{%Y-%m-%d %H:%M:%S}%T%t%T%F%T[%p]%T[%c]%T%f:%l%T%m%n");
     ~LogFormatter() = default;
-    std::string format(const class LogEvent& event);
+    // 格式化日志事件, 将日志事件event中的内容格式化到os中
+    std::ostream& format(std::ostream& os, const LogEvent::ptr event);
+    // 返回格式化后的日志内容
+    std::string format(LogEvent::ptr event);
     void init();
 public:
     class FormatItem {
@@ -36,7 +40,7 @@ public:
 
         virtual ~FormatItem() = default;
         // 格式化日志事件, 将日志事件event中的内容格式化到os中
-        virtual void format(std::ostream& os, const class LogEvent& event) = 0;
+        virtual void format(std::ostream& os, const LogEvent::ptr event) = 0;
     };
 
 private:

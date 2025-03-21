@@ -1,8 +1,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sstream>
 #include "logformatter.h"
-#include "define.h"
+#include "loglevel.h"
+#include "logevent.h"
 
 // 
 LogFormatter::LogFormatter(const std::string& pattern) : m_pattern(pattern) {
@@ -116,15 +118,151 @@ void LogFormatter::init(){
 class MessageFormatItem : public LogFormatter::FormatItem {
 public:
     MessageFormatItem(const std::string& pattern) {}
-    void format(std::ostream& os, const class LogEvent& event) override {
-        os << event.getLogContent();
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << event->getLogContent();
     }
 };
 
 class LevelFormatItem : public LogFormatter::FormatItem {
 public:
     LevelFormatItem(const std::string& pattern) {}
-    void format(std::ostream& os, const class LogEvent& event) override {
-        os << Loge
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << LogLevel::to_string(event->getLogLevel());
     }
 };
+
+class LoggerNameFormatItem : public LogFormatter::FormatItem {
+public:
+    LoggerNameFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << event->getLoggerName();
+    }
+};
+
+class FileNameFormatItem : public LogFormatter::FormatItem {
+public:
+    FileNameFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << event->getFileName();
+    }
+};
+
+class ElapseTimeFormatItem : public LogFormatter::FormatItem {
+public:
+    ElapseTimeFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << event->getProgramRunnedTime();
+    }
+};
+
+class ThreadIdFormatItem : public LogFormatter::FormatItem {
+public:
+    ThreadIdFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << event->getThreadId();
+    }
+};
+
+class CoroutineIdFormatItem : public LogFormatter::FormatItem {
+public:
+    CoroutineIdFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << event->getCoroutineId();
+    }
+};
+
+class ThreadNameFormatItem : public LogFormatter::FormatItem {
+public:
+    ThreadNameFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << event->getThreadName();
+    }
+};
+
+class DateTimeFormatItem : public LogFormatter::FormatItem {
+public:
+    // default format: %Y-%m-%d %H:%M:%S
+    DateTimeFormatItem(const std::string& pattern = "%Y-%m-%d %H:%M:%S"): m_date_format(pattern){
+        if(m_date_format.empty()) {
+            m_date_format = "%Y-%m-%d %H:%M:%S";
+        }
+    }
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        time_t event_time_stamp = event->getTimeStamp();
+        // 通过 localtime 将时间戳转换为 tm 结构体
+        struct tm tm;
+        localtime_r(&event_time_stamp, &tm);
+        // 通过 strftime 将 tm 结构体转换为字符串
+        char buf[64];
+        strftime(buf, sizeof(buf), m_date_format.c_str(), &tm);
+        os << buf;
+    }
+private:
+    std::string m_date_format;
+};
+
+class FileLineFormatItem : public LogFormatter::FormatItem {
+public:
+    FileLineFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << event->getFileName();
+    }
+};
+
+class LineNumberFormatItem : public LogFormatter::FormatItem {
+public:
+    LineNumberFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << event->getLineNumber();
+    }
+};
+
+// 将换行也作为一个格式化项
+class NewLineFormatItem : public LogFormatter::FormatItem {
+public:
+    NewLineFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << std::endl;
+    }
+};
+
+class StringFormatItem : public LogFormatter::FormatItem {
+public:
+    StringFormatItem(const std::string& str): m_string(str) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << m_string;
+    }
+private:
+    std::string m_string;
+};
+
+class TabFormatItem : public LogFormatter::FormatItem {
+public:
+    TabFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << "\t";
+    }
+};
+
+class PercentFormatItem : public LogFormatter::FormatItem {
+public:
+    PercentFormatItem(const std::string& pattern) {}
+    void format(std::ostream& os, const LogEvent::ptr event) override {
+        os << "%";
+    }
+};
+
+std::ostream& LogFormatter::format(std::ostream& os, const LogEvent::ptr event) {
+    for(auto& item : m_items) {
+        item->format(os, event);
+    }
+    return os;
+}
+
+std::string LogFormatter::format(LogEvent::ptr event) {
+    std::stringstream ss;
+    for(auto& item : m_items) {
+        item->format(ss, event);
+    }
+    return ss.str();
+}

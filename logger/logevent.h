@@ -2,16 +2,18 @@
 #define __LOG_EVENT_H__
 
 #include <string>
-#include "define.h"
+#include "loglevel.h"
 #include "logger.h"
 
 class LogEvent {
 public:
+    typedef std::shared_ptr<LogEvent> ptr;
+
     LogEvent();
     ~LogEvent();
     std::string getLogContent() const;
     std::string getLoggerName() const;
-    LOG_LEVEL getLogLevel() const;
+    LogLevel::Level getLogLevel() const;
     std::string getFileName() const;
     uint32_t getLineNumber() const;
     uint32_t getProgramRunnedTime() const;
@@ -22,7 +24,7 @@ public:
 private:
     std::string m_log_content; // 日志内容
     std::string m_logger_name; // 日志器名
-    LOG_LEVEL m_log_level; // 日志级别
+    LogLevel::Level m_log_level; // 日志级别
     std::string m_file_name; // 文件名
     uint32_t m_line_number; // 行号
     uint32_t m_program_runned_time; // 运行时间, sylar::getElapsedMS()
