@@ -2,6 +2,8 @@
 #define __LOG_APPENDER_H__
 
 #include <memory>
+#include <mutex>
+#include <fstream>
 #include "logformatter.h"
 #include "logevent.h"
 
@@ -19,6 +21,8 @@ public:
 
     virtual void log(LogEvent::ptr event) = 0;
 protected:
+    // m_mutex is used to ensure thread safety when accessing.(multiple log events)
+    std::mutex m_mutex;
     LogFormatter::ptr m_formatter;
     LogFormatter::ptr m_default_formatter;
 };
@@ -41,10 +45,16 @@ class FileLogAppender : public LogAppender {
 public:
     typedef std::shared_ptr<FileLogAppender> ptr; 
 
-    FileLogAppender();
+    FileLogAppender(const std::string& file_name);
     ~FileLogAppender();
+
+    void log(LogEvent::ptr event) override;
+    bool reopen_file();
 private:
-    
+    std::string m_filename;
+    std::ofstream m_filestream; // 文件流，用于传入给LogFormatter写入日志
+    bool m_reopen_error; // 重新打开文件 bool
+    uint64_t m_last_reopen_time; // 上次重新打开文件的时间
 };
 
 
