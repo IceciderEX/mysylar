@@ -29,9 +29,9 @@ public:
     LogFormatter(const std::string& pattern="%d{%Y-%m-%d %H:%M:%S}%T%t%T%F%T[%p]%T[%c]%T%f:%l%T%m%n");
     ~LogFormatter() = default;
     // 格式化日志事件, 将日志事件event中的内容格式化到os中
-    std::ostream& format(std::ostream& os, const LogEvent::ptr event);
+    std::ostream& format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event);
     // 返回格式化后的日志内容
-    std::string format(LogEvent::ptr event);
+    std::string format(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event);
     void init();
 public:
     class FormatItem {
@@ -40,7 +40,7 @@ public:
 
         virtual ~FormatItem() = default;
         // 格式化日志事件, 将日志事件event中的内容格式化到os中
-        virtual void format(std::ostream& os, const LogEvent::ptr event) = 0;
+        virtual void format(std::ostream& os, Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) = 0;
     };
 
 private:

@@ -27,12 +27,12 @@ StdoutLogAppender::StdoutLogAppender(): LogAppender(LogFormatter::ptr(new LogFor
 }
 
 // 将日志event输出到标准输出
-void StdoutLogAppender::log(LogEvent::ptr event) {
+void StdoutLogAppender::log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) {
     std::lock_guard<std::mutex> lock(m_mutex);
     if(m_formatter) {
-        m_formatter->format(std::cout, event);
+        m_formatter->format(std::cout, logger, level, event);
     } else {
-        m_default_formatter->format(std::cout, event);
+        m_default_formatter->format(std::cout, logger, level, event);
     }
     return;
 }
@@ -60,7 +60,10 @@ bool FileLogAppender::reopen_file() {
     return m_filestream.is_open();
 }
 
-void FileLogAppender::log(LogEvent::ptr event) {
+void FileLogAppender::log(Logger::ptr logger, LogLevel::Level level, LogEvent::ptr event) {
+    if(m_level < level) {
+        return;
+    }
     std::lock_guard<std::mutex> lock(m_mutex);
     uint64_t now = event->getTimeStamp();
     // 如果一个日志事件距离上次重新打开文件的时间超过60s，则重新打开文件
@@ -72,9 +75,9 @@ void FileLogAppender::log(LogEvent::ptr event) {
         m_last_reopen_time = now;
     }
     if(m_formatter) {
-        m_formatter->format(m_filestream, event);
+        m_formatter->format(m_filestream, logger, level, event);
     } else {
-        m_default_formatter->format(m_filestream, event);
+        m_default_formatter->format(m_filestream, logger, level, event);
     }
     return;
 }
